@@ -1,0 +1,102 @@
+name: CI for PRs
+
+on: pull_request
+
+jobs:
+  cpp-build:
+    name: C++ Matrix Build
+    strategy:
+      fail-fast: false
+      matrix:
+        CUDA_VER:
+          - "11.5.1"
+        PY_VER:
+          - "3.8"
+        LINUX_VER:
+          - "ubuntu18.04"
+          - "centos7"
+        ARCH:
+          - "ARM64"
+          - "X64"
+        CPU_LABEL:
+          - "cpu"
+          - "cpu-arm64"
+        exclude:
+          - LINUX_VER: "ubuntu18.04"
+            ARCH: "X64"
+          - LINUX_VER: "centos7"
+            ARCH: "ARM64"
+          - CPU_LABEL: "cpu"
+            ARCH: "ARM64"
+          - CPU_LABEL: "cpu-arm64"
+            ARCH: "X64"
+    runs-on:
+      - self-hosted
+      - ${{ matrix.ARCH }}
+      - ${{ matrix.CPU_LABEL }}
+    container: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
+    env:
+      BUILD_TYPE: "pull-request"
+      AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Setup gpuci-tools
+        run: |
+          git clone https://github.com/Ethyling/gpuci-tools.git -b gha
+          cp gpuci-tools/tools/* /usr/local/bin
+          rm -rf gpuci-tools
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: C++ build
+        run: ci/build_cpp.sh
+  py-build:
+    name: Python Matrix Build
+    needs: cpp-build
+    strategy:
+      fail-fast: false
+      matrix:
+        CUDA_VER:
+          - "11.5.1"
+        PY_VER:
+          - "3.8"
+          - "3.9"
+        LINUX_VER:
+          - "ubuntu18.04"
+          - "centos7"
+        ARCH:
+          - "ARM64"
+          - "X64"
+        CPU_LABEL:
+          - "cpu"
+          - "cpu-arm64"
+        exclude:
+          - LINUX_VER: "ubuntu18.04"
+            ARCH: "X64"
+          - LINUX_VER: "centos7"
+            ARCH: "ARM64"
+          - CPU_LABEL: "cpu"
+            ARCH: "ARM64"
+          - CPU_LABEL: "cpu-arm64"
+            ARCH: "X64"
+    runs-on:
+      - self-hosted
+      - ${{ matrix.ARCH }}
+      - ${{ matrix.CPU_LABEL }}
+    container: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
+    env:
+      BUILD_TYPE: "pull-request"
+      AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+      PY_VER: ${{ matrix.PY_VER }}
+    steps:
+      - name: Setup gpuci-tools
+        run: |
+          git clone https://github.com/Ethyling/gpuci-tools.git -b gha
+          cp gpuci-tools/tools/* /usr/local/bin
+          rm -rf gpuci-tools
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Python build
+        run: ci/build_python.sh
