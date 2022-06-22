@@ -27,6 +27,7 @@ jobs:
       BUILD_TYPE: "pull-request"
       AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+      PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
     steps:
       - name: Setup gpuci-tools
         run: |
@@ -65,6 +66,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
       PY_VER: ${{ matrix.PY_VER }}
+      PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
     steps:
       - name: Setup gpuci-tools
         run: |
