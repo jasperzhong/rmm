@@ -5,9 +5,6 @@ set -euo pipefail
 # TODO: Move in recipe build?
 export CMAKE_GENERATOR=Ninja
 
-# TODO: Move to node startup?
-export PARALLEL_LEVEL=4
-
 # TODO: Move to job config
 export CUDA=11.5
 
