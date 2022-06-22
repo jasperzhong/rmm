@@ -48,6 +48,7 @@ jobs:
           - "11.5.1"
         PY_VER:
           - "3.8"
+          - "3.9"
         LINUX_VER:
           - "ubuntu20.04"
         ARCH:
