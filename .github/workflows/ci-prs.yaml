@@ -8,15 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        CUDA_VER:
-          - "11.5.1"
-        PY_VER:
-          - "3.8"
-        LINUX_VER:
-          - "ubuntu20.04"
-        ARCH:
-          - "arm64"
-          - "amd64"
+        include:
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.8" }
     runs-on:
       - self-hosted
       - linux
@@ -40,22 +34,45 @@ jobs:
           fetch-depth: 0
       - name: C++ build
         run: ci/build_cpp.sh
-  py-build:
+  cpp-tests:
+    name: C++ Matrix Tests
+    needs: cpp-build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.8" }
+    runs-on:
+      - self-hosted
+      - linux
+      - cpu4
+      - ${{ matrix.ARCH }}
+    container:
+      image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
+      env:
+        BUILD_TYPE: "pull-request"
+        AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+        PY_VER: ${{ matrix.PY_VER }}
+        PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
+    steps:
+      - name: Setup gpuci-tools
+        run: echo "CPP test"
+  python-build:
     name: Python Matrix Build
     needs: cpp-build
     strategy:
       fail-fast: false
       matrix:
-        CUDA_VER:
-          - "11.5.1"
-        PY_VER:
-          - "3.8"
-          - "3.9"
-        LINUX_VER:
-          - "ubuntu20.04"
-        ARCH:
-          - "arm64"
-          - "amd64"
+        include:
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.9" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.9" }
     runs-on:
       - self-hosted
       - linux
@@ -80,3 +97,31 @@ jobs:
           fetch-depth: 0
       - name: Python build
         run: ci/build_python.sh
+  python-tests:
+    name: Python Matrix Tests
+    needs: python-build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.9" }
+          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.9" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.9" }
+          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.9" }
+    runs-on:
+      - self-hosted
+      - linux
+      - cpu4
+      - ${{ matrix.ARCH }}
+    container:
+      image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
+      env:
+        BUILD_TYPE: "pull-request"
+        AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+        PY_VER: ${{ matrix.PY_VER }}
+        PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
+    steps:
+      - name: Setup gpuci-tools
+        run: echo "Python tests"
