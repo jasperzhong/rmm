@@ -13,27 +13,15 @@ jobs:
         PY_VER:
           - "3.8"
         LINUX_VER:
-          - "ubuntu18.04"
-          - "centos7"
+          - "ubuntu20.04"
         ARCH:
-          - "ARM64"
-          - "X64"
-        CPU_LABEL:
-          - "cpu"
-          - "cpu-arm64"
-        exclude:
-          - LINUX_VER: "ubuntu18.04"
-            ARCH: "X64"
-          - LINUX_VER: "centos7"
-            ARCH: "ARM64"
-          - CPU_LABEL: "cpu"
-            ARCH: "ARM64"
-          - CPU_LABEL: "cpu-arm64"
-            ARCH: "X64"
+          - "arm64"
+          - "amd64"
     runs-on:
       - self-hosted
+      - linux
+      - cpu4
       - ${{ matrix.ARCH }}
-      - ${{ matrix.CPU_LABEL }}
     container: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
     env:
       BUILD_TYPE: "pull-request"
@@ -60,29 +48,16 @@ jobs:
           - "11.5.1"
         PY_VER:
           - "3.8"
-          - "3.9"
         LINUX_VER:
-          - "ubuntu18.04"
-          - "centos7"
+          - "ubuntu20.04"
         ARCH:
-          - "ARM64"
-          - "X64"
-        CPU_LABEL:
-          - "cpu"
-          - "cpu-arm64"
-        exclude:
-          - LINUX_VER: "ubuntu18.04"
-            ARCH: "X64"
-          - LINUX_VER: "centos7"
-            ARCH: "ARM64"
-          - CPU_LABEL: "cpu"
-            ARCH: "ARM64"
-          - CPU_LABEL: "cpu-arm64"
-            ARCH: "X64"
+          - "arm64"
+          - "amd64"
     runs-on:
       - self-hosted
+      - linux
+      - cpu4
       - ${{ matrix.ARCH }}
-      - ${{ matrix.CPU_LABEL }}
     container: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
     env:
       BUILD_TYPE: "pull-request"
