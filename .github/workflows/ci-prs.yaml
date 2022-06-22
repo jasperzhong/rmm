@@ -22,12 +22,13 @@ jobs:
       - linux
       - cpu4
       - ${{ matrix.ARCH }}
-    container: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
-    env:
-      BUILD_TYPE: "pull-request"
-      AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
-      PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
+    container:
+      image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
+      env:
+        BUILD_TYPE: "pull-request"
+        AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+        PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
     steps:
       - name: Setup gpuci-tools
         run: |
@@ -60,13 +61,14 @@ jobs:
       - linux
       - cpu4
       - ${{ matrix.ARCH }}
-    container: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
-    env:
-      BUILD_TYPE: "pull-request"
-      AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
-      PY_VER: ${{ matrix.PY_VER }}
-      PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
+    container:
+      image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
+      env:
+        BUILD_TYPE: "pull-request"
+        AWS_ACCESS_KEY_ID: ${{ secrets.RAPIDSAI_GHA_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.RAPIDSAI_GHA_AWS_SECRET_ACCESS_KEY }}
+        PY_VER: ${{ matrix.PY_VER }}
+        PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
     steps:
       - name: Setup gpuci-tools
         run: |
