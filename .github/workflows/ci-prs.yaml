@@ -14,7 +14,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-      - cpu4
+      - cpu8
       - ${{ matrix.ARCH }}
     container:
       image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
@@ -41,15 +41,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
-          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.8" }
-          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.8" }
+          #- { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
+          #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.8" }
+          #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.8" }
           - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.8" }
-          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.8" }
+          #- { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.8" }
     runs-on:
       - self-hosted
       - linux
-      - cpu4
+      - gpu
       - ${{ matrix.ARCH }}
     container:
       image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
@@ -61,7 +61,15 @@ jobs:
         PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
     steps:
       - name: Setup gpuci-tools
-        run: echo "CPP test"
+        run: |
+          git clone https://github.com/Ethyling/gpuci-tools.git -b gha
+          cp gpuci-tools/tools/* /usr/local/bin
+          rm -rf gpuci-tools
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: C++ tests
+        run: ci/test_cpp.sh
   python-build:
     name: Python Matrix Build
     needs: cpp-build
@@ -76,7 +84,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-      - cpu4
+      - cpu8
       - ${{ matrix.ARCH }}
     container:
       image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
@@ -104,15 +112,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
-          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.9" }
-          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.9" }
+          #- { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
+          #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.9" }
+          #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.9" }
           - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.9" }
-          - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.9" }
+          #- { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.9" }
     runs-on:
       - self-hosted
       - linux
-      - cpu4
+      - gpu
       - ${{ matrix.ARCH }}
     container:
       image: rapidsai/ci:cuda${{ matrix.CUDA_VER }}-base-${{ matrix.LINUX_VER }}-py${{ matrix.PY_VER }}
@@ -124,4 +132,12 @@ jobs:
         PARALLEL_LEVEL: ${{ env.PARALLEL_LEVEL }}
     steps:
       - name: Setup gpuci-tools
-        run: echo "Python tests"
+        run: |
+          git clone https://github.com/Ethyling/gpuci-tools.git -b gha
+          cp gpuci-tools/tools/* /usr/local/bin
+          rm -rf gpuci-tools
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Python tests
+        run: ci/test_python.sh
