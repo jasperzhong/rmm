@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+conda config --set default_threads "${PARALLEL_LEVEL}"
+
 # TODO: Move in recipe build?
 export CMAKE_GENERATOR=Ninja
 

@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+conda config --set default_threads "${PARALLEL_LEVEL}"
+
 # Update env vars
 source rapids-env-update
 
