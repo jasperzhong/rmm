@@ -41,8 +41,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
-          #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.8" }
           #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.8" }
           - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.8" }
           #- { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.8" }
@@ -113,8 +113,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
-          #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.9" }
+          - { CUDA_VER: "11.0.3", LINUX_VER: "centos7", ARCH: "amd64", PY_VER: "3.8" }
+          - { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "amd64", PY_VER: "3.9" }
           #- { CUDA_VER: "11.2.2", LINUX_VER: "ubuntu18.04", ARCH: "arm64", PY_VER: "3.9" }
           - { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "amd64", PY_VER: "3.9" }
           #- { CUDA_VER: "11.5.1", LINUX_VER: "ubuntu20.04", ARCH: "arm64", PY_VER: "3.9" }
