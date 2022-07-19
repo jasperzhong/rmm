@@ -18,6 +18,8 @@ gpuci_mamba_retry install \
   -c "${PYTHON_CHANNEL}" \
   rmm librmm
 
+gpuci_mamba_retry install pytest
+
 TESTRESULTS_DIR=test-results
 mkdir -p ${TESTRESULTS_DIR}
 SUITEERROR=0
