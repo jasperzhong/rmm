@@ -18,7 +18,7 @@ gpuci_mamba_retry install \
   -c "${PYTHON_CHANNEL}" \
   rmm librmm
 
-gpuci_mamba_retry install pytest
+gpuci_mamba_retry install pytest pytest-cov
 
 TESTRESULTS_DIR=test-results
 mkdir -p ${TESTRESULTS_DIR}
