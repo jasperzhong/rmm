@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+#TODO: Remove
+. /opt/conda/etc/profile.d/conda.sh
+conda activate base
+
 # Check environment
 source ci/check_env.sh
 
