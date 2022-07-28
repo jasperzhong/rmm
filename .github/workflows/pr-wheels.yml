@@ -1,0 +1,18 @@
+name: RMM wheels
+
+on:
+  push:
+    branches:
+      - 'pull-request/[0-9]+'
+
+jobs:
+  rmm-wheel:
+    uses: rapidsai/shared-action-workflows/.github/workflows/pr-wheels.yml@feat/wheel-ci-actions
+    with:
+      package-name: rmm_cuda11
+      package-dir: python
+      cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
+      cpu-smoketest-command: "python3 -c 'import rmm; print(rmm)'"
+      manylinux-platform: manylinux_2_24
+      gpu-smoketest-command: ""
+    secrets: inherit
