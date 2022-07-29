@@ -13,6 +13,5 @@ jobs:
       package-dir: python
       cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
       cpu-smoketest-command: "python3 -c 'import rmm; print(rmm)'"
-      manylinux-platform: manylinux_2_24
       gpu-smoketest-command: ""
     secrets: inherit
