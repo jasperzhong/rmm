@@ -11,6 +11,7 @@ jobs:
     with:
       package-name: rmm_cuda11
       package-dir: python
+      python-versions: "3.8 3.9"
       cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
       cpu-smoketest-command: "python3 -c 'import rmm; print(rmm)'"
       gpu-smoketest-command: ""
