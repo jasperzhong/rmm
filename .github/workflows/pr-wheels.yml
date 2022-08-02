@@ -13,8 +13,8 @@ jobs:
       package-dir: python
       python-version: "3.8"
       cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
-      cpu-smoketest-command: "import rmm; print(rmm)"
-      gpu-smoketest-command: "import rmm; buf = rmm.DeviceBuffer(size=100); print(buf.size); print(buf.ptr)"
+      cpu-smoketest: "import rmm; print(rmm)"
+      gpu-smoketest: "import rmm; buf = rmm.DeviceBuffer(size=100); print(buf.size); print(buf.ptr)"
     secrets: inherit
   rmm-wheel-39:
     uses: rapidsai/shared-action-workflows/.github/workflows/pr-wheels.yml@feat/wheel-ci-actions
@@ -23,6 +23,6 @@ jobs:
       package-dir: python
       python-version: "3.9"
       cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
-      cpu-smoketest-command: "import rmm; print(rmm)"
-      gpu-smoketest-command: "import rmm; buf = rmm.DeviceBuffer(size=100); print(buf.size); print(buf.ptr)"
+      cpu-smoketest: "import rmm; print(rmm)"
+      gpu-smoketest: "import rmm; buf = rmm.DeviceBuffer(size=100); print(buf.size); print(buf.ptr)"
     secrets: inherit
