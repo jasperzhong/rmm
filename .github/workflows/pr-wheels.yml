@@ -6,13 +6,23 @@ on:
       - 'pull-request/[0-9]+'
 
 jobs:
-  rmm-wheel:
+  rmm-wheel-38:
     uses: rapidsai/shared-action-workflows/.github/workflows/pr-wheels.yml@feat/wheel-ci-actions
     with:
       package-name: rmm_cuda11
       package-dir: python
-      python-versions: "3.8 3.9"
+      python-version: "3.8"
       cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
       cpu-smoketest-command: "python3 -c 'import rmm; print(rmm)'"
-      gpu-smoketest-command: ""
+      gpu-smoketest-command: "python3 -c 'import rmm; buf = rmm.DeviceBuffer(size=100); print(buf.size); print(buf.ptr)'"
+    secrets: inherit
+  rmm-wheel-39:
+    uses: rapidsai/shared-action-workflows/.github/workflows/pr-wheels.yml@feat/wheel-ci-actions
+    with:
+      package-name: rmm_cuda11
+      package-dir: python
+      python-version: "3.9"
+      cibw-environment: "PYTHON_PACKAGE_CUDA_SUFFIX='-cuda11'"
+      cpu-smoketest-command: "python3 -c 'import rmm; print(rmm)'"
+      gpu-smoketest-command: "python3 -c 'import rmm; buf = rmm.DeviceBuffer(size=100); print(buf.size); print(buf.ptr)'"
     secrets: inherit
