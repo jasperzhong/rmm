@@ -20,6 +20,13 @@
 #include <rmm/cuda_stream_view.hpp>
 #include <rmm/detail/error.hpp>
 
+#include <fcntl.h> /* For O_* constants */
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <chrono>
+
 namespace rmm {
 namespace mr {
 
@@ -29,14 +36,14 @@ namespace mr {
  *
  * See https://devblogs.nvidia.com/how-optimize-data-transfers-cuda-cc/
  *---------------------------------------------------------------------------**/
-class pinned_memory_resource final : public device_memory_resource {
+class shared_memory_resource final : public device_memory_resource {
  public:
-  pinned_memory_resource()                               = default;
-  ~pinned_memory_resource()                              = default;
-  pinned_memory_resource(pinned_memory_resource const &) = default;
-  pinned_memory_resource(pinned_memory_resource &&)      = default;
-  pinned_memory_resource &operator=(pinned_memory_resource const &) = default;
-  pinned_memory_resource &operator=(pinned_memory_resource &&) = default;
+  shared_memory_resource(int local_rank) : local_rank_(local_rank) {}
+  ~shared_memory_resource()                              = default;
+  shared_memory_resource(shared_memory_resource const &) = default;
+  shared_memory_resource(shared_memory_resource &&)      = default;
+  shared_memory_resource &operator=(shared_memory_resource const &) = default;
+  shared_memory_resource &operator=(shared_memory_resource &&) = default;
 
   /**
    * @brief Query whether the resource supports use of non-null streams for
@@ -55,12 +62,12 @@ class pinned_memory_resource final : public device_memory_resource {
 
  private:
   /**---------------------------------------------------------------------------*
-   * @brief Allocates pinned memory on the host of size at least `bytes` bytes.
+   * @brief Allocates shared pinned memory on the host of size at least `bytes` bytes.
    *
    * @note Stream argument is ignored
    *
    * @throws std::bad_alloc When the requested `bytes` and `alignment` cannot be
-   * allocated.
+   * allocated or if the shared memory file cannot be created.
    *
    * @param bytes The size of the allocation
    * @return void* Pointer to the newly allocated memory
@@ -70,8 +77,32 @@ class pinned_memory_resource final : public device_memory_resource {
     // don't allocate anything if the user requested zero bytes
     if (0 == bytes) { return nullptr; }
 
-    void *p{nullptr};
-    RMM_CUDA_TRY(cudaMallocHost(&p, bytes), rmm::bad_alloc);
+    // create shared memory
+    int fd = -1;
+    if (local_rank_ == 0) {
+      fd = shm_open("/shm", O_RDWR | O_CREAT, 0666);
+      if (fd == -1) {
+        RMM_LOG_ERROR("shm_open failed");
+        return nullptr;
+      }
+      if (ftruncate(fd, bytes) == 0) {
+        RMM_LOG_ERROR("ftruncate failed");
+        return nullptr;
+      }
+    } else {
+      // need to wait for local rank 0 to create the shared memory
+      while (fd == -1) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        fd = shm_open("/shm", O_RDWR, 0666);
+      }
+    }
+    void *p = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (p == MAP_FAILED) {
+      RMM_LOG_ERROR("mmap failed");
+      return nullptr;
+    }
+
+    RMM_CUDA_TRY(cudaHostRegister(p, bytes, cudaHostRegisterPortable), rmm::bad_alloc);
     return p;
   }
 
@@ -84,9 +115,11 @@ class pinned_memory_resource final : public device_memory_resource {
    *
    * @param p Pointer to be deallocated
    *---------------------------------------------------------------------------**/
-  void do_deallocate(void *p, std::size_t, cuda_stream_view) override
+  void do_deallocate(void *p, std::size_t bytes, cuda_stream_view) override
   {
-    RMM_ASSERT_CUDA_SUCCESS(cudaFreeHost(p));
+    RMM_ASSERT_CUDA_SUCCESS(cudaHostUnregister(p));
+    munmap(p, bytes);
+    if (local_rank_ == 0) { shm_unlink("/shm"); }
   }
 
   /**
@@ -103,7 +136,7 @@ class pinned_memory_resource final : public device_memory_resource {
    */
   bool do_is_equal(device_memory_resource const &other) const noexcept override
   {
-    return dynamic_cast<pinned_memory_resource const *>(&other) != nullptr;
+    return dynamic_cast<shared_memory_resource const *>(&other) != nullptr;
   }
 
   /**
@@ -121,6 +154,8 @@ class pinned_memory_resource final : public device_memory_resource {
     RMM_CUDA_TRY(cudaMemGetInfo(&free_size, &total_size));
     return std::make_pair(free_size, total_size);
   }
+
+  int local_rank_;  // local rank of the process
 };
 }  // namespace mr
 }  // namespace rmm
