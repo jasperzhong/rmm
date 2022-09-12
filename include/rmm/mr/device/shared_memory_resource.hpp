@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <chrono>
+#include <string>
+#include <thread>
 
 namespace rmm {
 namespace mr {
@@ -38,7 +40,7 @@ namespace mr {
  *---------------------------------------------------------------------------**/
 class shared_memory_resource final : public device_memory_resource {
  public:
-  shared_memory_resource(int local_rank) : local_rank_(local_rank) {}
+  shared_memory_resource(int local_rank) : local_rank_(local_rank), cnt_(0) {}
   ~shared_memory_resource()                              = default;
   shared_memory_resource(shared_memory_resource const &) = default;
   shared_memory_resource(shared_memory_resource &&)      = default;
@@ -77,29 +79,32 @@ class shared_memory_resource final : public device_memory_resource {
     // don't allocate anything if the user requested zero bytes
     if (0 == bytes) { return nullptr; }
 
+    const std::string name = "/rmm_pool_" + std::to_string(cnt_++);
+
     // create shared memory
     int fd = -1;
     if (local_rank_ == 0) {
-      fd = shm_open("/shm", O_RDWR | O_CREAT, 0666);
+      fd = shm_open(name.c_str(), O_RDWR | O_CREAT, 0666);
       if (fd == -1) {
-        RMM_LOG_ERROR("shm_open failed");
-        return nullptr;
+        RMM_LOG_ERROR("Failed to create shared memory file");
+        throw std::bad_alloc();
       }
-      if (ftruncate(fd, bytes) == 0) {
-        RMM_LOG_ERROR("ftruncate failed");
-        return nullptr;
+      int rc = ftruncate(fd, bytes);
+      if (rc != 0) {
+        RMM_LOG_ERROR("Failed to resize shared memory file");
+        throw std::bad_alloc();
       }
     } else {
       // need to wait for local rank 0 to create the shared memory
       while (fd == -1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        fd = shm_open("/shm", O_RDWR, 0666);
+        fd = shm_open(name.c_str(), O_RDWR, 0666);
       }
     }
     void *p = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (p == MAP_FAILED) {
-      RMM_LOG_ERROR("mmap failed");
-      return nullptr;
+      RMM_LOG_ERROR("Failed to map shared memory file");
+      throw std::bad_alloc();
     }
 
     RMM_CUDA_TRY(cudaHostRegister(p, bytes, cudaHostRegisterPortable), rmm::bad_alloc);
@@ -119,7 +124,8 @@ class shared_memory_resource final : public device_memory_resource {
   {
     RMM_ASSERT_CUDA_SUCCESS(cudaHostUnregister(p));
     munmap(p, bytes);
-    if (local_rank_ == 0) { shm_unlink("/shm"); }
+    const std::string name = "/rmm_pool_" + std::to_string(--cnt_);
+    shm_unlink(name.c_str());
   }
 
   /**
@@ -156,6 +162,7 @@ class shared_memory_resource final : public device_memory_resource {
   }
 
   int local_rank_;  // local rank of the process
+  int cnt_;
 };
 }  // namespace mr
 }  // namespace rmm
