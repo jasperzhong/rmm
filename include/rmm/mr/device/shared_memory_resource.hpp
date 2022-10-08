@@ -20,6 +20,7 @@
 #include <rmm/cuda_stream_view.hpp>
 #include <rmm/detail/error.hpp>
 
+#include <errno.h>
 #include <fcntl.h> /* For O_* constants */
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -86,12 +87,12 @@ class shared_memory_resource final : public device_memory_resource {
     if (local_rank_ == 0) {
       fd = shm_open(name.c_str(), O_RDWR | O_CREAT, 0666);
       if (fd == -1) {
-        RMM_LOG_ERROR("Failed to create shared memory file");
+        RMM_LOG_ERROR("Failed to create shared memory file: {}", strerror(errno));
         throw std::bad_alloc();
       }
       int rc = ftruncate(fd, bytes);
       if (rc != 0) {
-        RMM_LOG_ERROR("Failed to resize shared memory file");
+        RMM_LOG_ERROR("Failed to resize shared memory file: {}", strerror(errno));
         throw std::bad_alloc();
       }
     } else {
@@ -103,7 +104,7 @@ class shared_memory_resource final : public device_memory_resource {
     }
     void *p = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (p == MAP_FAILED) {
-      RMM_LOG_ERROR("Failed to map shared memory file");
+      RMM_LOG_ERROR("Failed to map shared memory file: {}", strerror(errno));
       throw std::bad_alloc();
     }
 
@@ -123,9 +124,11 @@ class shared_memory_resource final : public device_memory_resource {
   void do_deallocate(void *p, std::size_t bytes, cuda_stream_view) override
   {
     RMM_ASSERT_CUDA_SUCCESS(cudaHostUnregister(p));
-    munmap(p, bytes);
+    int rc = munmap(p, bytes);
+    if (rc != 0) { RMM_LOG_ERROR("Failed to unmap shared memory file: {}", strerror(errno)); }
     const std::string name = "/rmm_pool_" + std::to_string(--cnt_);
-    shm_unlink(name.c_str());
+    rc = shm_unlink(name.c_str());
+    if (rc != 0) { RMM_LOG_ERROR("Failed to unlink shared memory file: {}", strerror(errno)); }
   }
 
   /**
