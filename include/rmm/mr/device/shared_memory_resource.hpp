@@ -129,6 +129,7 @@ class shared_memory_resource final : public device_memory_resource {
     // NB: only the first rank should delete the shared memory file
     if (local_rank_ == 0) {
       const std::string name = "/rmm_pool_" + std::to_string(--cnt_);
+      rc = shm_unlink(name.c_str());
       if (rc != 0) { RMM_LOG_ERROR("Failed to unlink shared memory file: {}", strerror(errno)); }
     }
   }
